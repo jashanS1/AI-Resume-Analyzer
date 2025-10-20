@@ -1,6 +1,5 @@
 import streamlit as st
 import spacy
-import subprocess  # Yeh naya import hai
 from spacy.matcher import Matcher, PhraseMatcher
 import re
 import pdfplumber
@@ -13,37 +12,14 @@ import warnings
 # Suppress warnings for a cleaner output
 warnings.filterwarnings("ignore")
 
-# --- YEH NAYA SECTION HAI: Model ko check aur download karne ke liye ---
-MODEL_NAME = "en_core_web_lg"
-
-@st.cache_resource
-def load_spacy_model(model_name):
-    """
-    Ek function jo check karta hai model installed hai ya nahi.
-    Agar nahi hai, toh download karta hai.
-    """
-    try:
-        # Model ko seedha load karne ki koshish karo
-        nlp = spacy.load(model_name)
-        return nlp
-    except OSError:
-        # Agar model nahi mila (OSError), toh use download karo
-        st.info(f"Pehli baar setup ho raha hai: '{model_name}' model download kiya ja raha hai... (1-2 min lagenge)")
-        try:
-            # subprocess ka use karke download command chalao
-            subprocess.run(["python", "-m", "spacy", "download", model_name], check=True)
-            # Download ke baad phir se load karo
-            nlp = spacy.load(model_name)
-            return nlp
-        except Exception as e:
-            st.error(f"Model download karne mein error: {e}. Please app ko 'Reboot' karein.")
-            st.stop()
-
 # --- Load NLP Model ---
-# Purana try/except block hata kar yeh naya logic use karein
-with st.spinner("AI model (spaCy) ko load kiya ja raha hai..."):
-    nlp = load_spacy_model(MODEL_NAME)
-# -------------------------------------------------------------------
+# Hum seedha load kar rahe hain kyunki yeh requirements.txt se install ho jayega
+MODEL_NAME = "en_core_web_lg"
+try:
+    nlp = spacy.load(MODEL_NAME)
+except OSError:
+    st.error(f"Model '{MODEL_NAME}' load nahi ho pa raha. Check karein ki woh requirements.txt mein sahi se add hai.")
+    st.stop()
 
 
 # --- Configuration (Skills & Keywords) ---
@@ -82,7 +58,7 @@ def extract_text(file):
         return extract_text_from_docx(file)
     return ""
 
-# --- 2. "Pro" Parsing Functions --- (Yahan se baaki sab same hai)
+# --- 2. "Pro" Parsing Functions ---
 
 def parse_jd_requirements(jd_text):
     jd_doc = nlp(jd_text.lower())
@@ -212,17 +188,14 @@ st.markdown("Yeh ek advanced analyzer hai jo sirf keywords nahi, balki context, 
 # --- DEMO BUTTON ---
 SAMPLE_JD = """
 **Job Title: Senior Python Developer (AI/ML)**
-
 **Role:**
 We are seeking a highly motivated Senior Python Developer to join our innovation team. The ideal candidate must-have 5+ years of experience in developing and deploying machine learning models.
-
 **Key Responsibilities:**
 - Design, build, and maintain efficient, reusable, and reliable Python code.
 - Implement machine learning models using scikit-learn and TensorFlow.
 - Develop backend services using Flask or Django.
 - Manage data pipelines and databases (SQL, MongoDB).
 - Work with cloud platforms, AWS is required.
-
 **Qualifications:**
 - **Required:** Python, Machine Learning, scikit-learn, SQL.
 - **Preferred (Bonus):** Docker, AWS, NLP, Streamlit.
@@ -231,18 +204,14 @@ We are seeking a highly motivated Senior Python Developer to join our innovation
 SAMPLE_RESUME = """
 **John Doe**
 AI & Machine Learning Engineer | 5+ years experience
-
 **Summary:**
 Results-driven developer with 5 years of experience in building scalable AI solutions. Led multiple projects from concept to deployment.
-
 **Experience:**
-
 **Sr. AI Engineer (2020 - Present)**
 - Developed a customer churn prediction model using Python, scikit-learn, and TensorFlow, achieving 92% accuracy.
 - Built a REST API using Flask to serve model predictions.
 - Managed a large PostgreSQL database for training data.
 - Optimized data processing tasks using Pandas and NumPy.
-
 **Skills:**
 - **Languages:** Python, SQL
 - **Frameworks:** scikit-learn, TensorFlow, Pandas, Flask
@@ -370,4 +339,3 @@ if st.button("Analyze My Hireability 🚀", type="primary"):
         st.write(f"`{', '.join(set(jd_good_to_have) - set(resume_skills)) or 'None! Good job.'}`")
         
         st.session_state.demo_resume_text = ""
-
