@@ -1,5 +1,6 @@
 import streamlit as st
 import spacy
+import subprocess  # Yeh naya import hai
 from spacy.matcher import Matcher, PhraseMatcher
 import re
 import pdfplumber
@@ -12,13 +13,37 @@ import warnings
 # Suppress warnings for a cleaner output
 warnings.filterwarnings("ignore")
 
+# --- YEH NAYA SECTION HAI: Model ko check aur download karne ke liye ---
+MODEL_NAME = "en_core_web_lg"
+
+@st.cache_resource
+def load_spacy_model(model_name):
+    """
+    Ek function jo check karta hai model installed hai ya nahi.
+    Agar nahi hai, toh download karta hai.
+    """
+    try:
+        # Model ko seedha load karne ki koshish karo
+        nlp = spacy.load(model_name)
+        return nlp
+    except OSError:
+        # Agar model nahi mila (OSError), toh use download karo
+        st.info(f"Pehli baar setup ho raha hai: '{model_name}' model download kiya ja raha hai... (1-2 min lagenge)")
+        try:
+            # subprocess ka use karke download command chalao
+            subprocess.run(["python", "-m", "spacy", "download", model_name], check=True)
+            # Download ke baad phir se load karo
+            nlp = spacy.load(model_name)
+            return nlp
+        except Exception as e:
+            st.error(f"Model download karne mein error: {e}. Please app ko 'Reboot' karein.")
+            st.stop()
+
 # --- Load NLP Model ---
-# Pehli baar run karne par time lagega
-try:
-    nlp = spacy.load("en_core_web_lg")
-except OSError:
-    st.error("Large spaCy model 'en_core_web_lg' not found. Please run: python -m spacy download en_core_web_lg")
-    st.stop()
+# Purana try/except block hata kar yeh naya logic use karein
+with st.spinner("AI model (spaCy) ko load kiya ja raha hai..."):
+    nlp = load_spacy_model(MODEL_NAME)
+# -------------------------------------------------------------------
 
 
 # --- Configuration (Skills & Keywords) ---
@@ -46,6 +71,7 @@ def extract_text_from_pdf(file):
     return text
 
 def extract_text_from_docx(file):
+:
     doc = docx.Document(file)
     text = "\n".join([para.text for para in doc.paragraphs])
     return text
@@ -57,7 +83,7 @@ def extract_text(file):
         return extract_text_from_docx(file)
     return ""
 
-# --- 2. "Pro" Parsing Functions ---
+# --- 2. "Pro" Parsing Functions --- (Yahan se baaki sab same hai)
 
 def parse_jd_requirements(jd_text):
     jd_doc = nlp(jd_text.lower())
@@ -184,8 +210,7 @@ st.set_page_config(layout="wide")
 st.title("Project Pro: The 'Recruiter's Eye' Resume Analyzer 👁️‍🗨️")
 st.markdown("Yeh ek advanced analyzer hai jo sirf keywords nahi, balki context, experience, aur JD requirements ko deeply analyze karta hai.")
 
-# --- DEMO BUTTON (YAHAN ADD KIYA HAI) ---
-# Ek sample JD aur Resume text banayein
+# --- DEMO BUTTON ---
 SAMPLE_JD = """
 **Job Title: Senior Python Developer (AI/ML)**
 
@@ -225,19 +250,16 @@ Results-driven developer with 5 years of experience in building scalable AI solu
 - **Tools:** Git, Docker, JIRA, Agile
 """
 
-# Session state ko initialize karna
 if 'jd_text_area' not in st.session_state:
     st.session_state.jd_text_area = ""
 if 'demo_resume_text' not in st.session_state:
     st.session_state.demo_resume_text = ""
 
 if st.button("Recruiter Busy? Click for a Quick Demo! 💡"):
-    # Demo button dabane par, session state update hoga
-    st.session_state.resume_file = None # File uploader ko clear karein
+    st.session_state.resume_file = None
     st.session_state.jd_text_area = SAMPLE_JD
     st.session_state.demo_resume_text = SAMPLE_RESUME
-    st.rerun() # Page ko refresh karega taaki values update ho jaayein
-
+    st.rerun()
 
 # --- Layout ---
 col1, col2 = st.columns(2)
@@ -246,23 +268,20 @@ with col1:
     st.header("1. Apna Resume Upload Karein")
     resume_file = st.file_uploader("Sirf PDF ya DOCX file", type=['pdf', 'docx'], key="resume_file")
     
-    # Agar demo text hai, toh use dikhayein
     if st.session_state.demo_resume_text and not resume_file:
         st.info("Demo Resume Loaded. Press 'Analyze' below.")
         st.text_area("Demo Resume Preview", st.session_state.demo_resume_text, height=200, disabled=True)
 
 with col2:
     st.header("2. Job Description (JD) Paste Karein")
-    # 'value' ko session state se link kiya
     jd_text = st.text_area("Yahan job description daalein...", 
                            value=st.session_state.jd_text_area, 
                            height=310, 
-                           key="jd_text_area") # Key zaroori hai
+                           key="jd_text_area")
 
-# --- Analysis Button (LOGIC UPDATE KIYA HAI) ---
+# --- Analysis Button ---
 if st.button("Analyze My Hireability 🚀", type="primary"):
     
-    # Check karein ki demo use ho raha hai ya file upload
     if resume_file is not None:
         resume_text = extract_text(resume_file)
         if not jd_text:
@@ -273,24 +292,19 @@ if st.button("Analyze My Hireability 🚀", type="primary"):
         resume_text = st.session_state.demo_resume_text
     else:
         st.error("Please resume file upload karein aur JD paste karein (ya demo button use karein).")
-        st.stop() # Analysis ko roko
+        st.stop()
         
-    # --- Yahan se baaki ka analysis code same hai ---
     with st.spinner("Ek Recruiter ki tarah aapka resume padh raha hoon... 🧐"):
-        
-        # --- Step A: Parsing ---
         jd_must_have, jd_good_to_have = parse_jd_requirements(jd_text)
         resume_skills = extract_skills_from_resume(resume_text)
         resume_yoe = extract_years_of_experience(resume_text)
         action_verb_score = check_action_verbs(resume_text)
 
-        # --- Step B: Scoring ---
         final_score, scores_breakdown = calculate_pro_score(
             resume_text, jd_text, resume_skills, 
             jd_must_have, jd_good_to_have, resume_yoe
         )
         
-        # --- Step C: Feedback ---
         feedback_points = generate_pro_feedback(
             scores_breakdown, resume_skills,
             jd_must_have, jd_good_to_have, action_verb_score
@@ -298,7 +312,6 @@ if st.button("Analyze My Hireability 🚀", type="primary"):
         
     st.success("Analysis Complete!")
     
-    # --- Display Results ---
     st.header(f"Final Hireability Score: {final_score}%")
     st.progress(final_score)
     
@@ -311,7 +324,6 @@ if st.button("Analyze My Hireability 🚀", type="primary"):
         
     st.divider()
 
-    # --- Detailed Breakdown ---
     res_col1, res_col2 = st.columns(2)
     
     with res_col1:
@@ -339,7 +351,6 @@ if st.button("Analyze My Hireability 🚀", type="primary"):
     
     st.divider()
     
-    # --- Skills Match Details (Accordion) ---
     with st.expander("Skill Match Details Dekhein"):
         skill_col1, skill_col2, skill_col3 = st.columns(3)
         
@@ -359,6 +370,4 @@ if st.button("Analyze My Hireability 🚀", type="primary"):
         st.subheader("⚡ Missing Good-to-Have Skills")
         st.write(f"`{', '.join(set(jd_good_to_have) - set(resume_skills)) or 'None! Good job.'}`")
         
-        # Clear demo state after analysis
         st.session_state.demo_resume_text = ""
-        # st.session_state.jd_text_area = "" # JD ko clear nahi karte, shayad user doosra resume test karna chahe
