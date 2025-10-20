@@ -4,3 +4,6 @@ scikit-learn
 pdfplumber
 python-docx
 pandas
+
+# Final Tareeka: Seedha model package ko install karna
+https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.7.0/en_core_web_lg-3.7.0-py3-none-any.whl
