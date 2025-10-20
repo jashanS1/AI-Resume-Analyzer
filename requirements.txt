@@ -4,6 +4,3 @@ scikit-learn
 pdfplumber
 python-docx
 pandas
-
-# Yeh spaCy ke 'large' model ko install karne ke liye hai
-https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.7.0/en_core_web_lg-3.7.0.tar.gz#egg=en_core_web_lg
