@@ -14,7 +14,7 @@ warnings.filterwarnings("ignore")
 
 # --- Load NLP Model ---
 # Hum seedha load kar rahe hain kyunki yeh requirements.txt se install ho jayega
-MODEL_NAME = "en_core_web_lg"
+MODEL_NAME = "en_core_web_md"
 try:
     nlp = spacy.load(MODEL_NAME)
 except OSError:
@@ -339,3 +339,4 @@ if st.button("Analyze My Hireability 🚀", type="primary"):
         st.write(f"`{', '.join(set(jd_good_to_have) - set(resume_skills)) or 'None! Good job.'}`")
         
         st.session_state.demo_resume_text = ""
+
