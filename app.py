@@ -71,7 +71,6 @@ def extract_text_from_pdf(file):
     return text
 
 def extract_text_from_docx(file):
-:
     doc = docx.Document(file)
     text = "\n".join([para.text for para in doc.paragraphs])
     return text
@@ -371,3 +370,4 @@ if st.button("Analyze My Hireability 🚀", type="primary"):
         st.write(f"`{', '.join(set(jd_good_to_have) - set(resume_skills)) or 'None! Good job.'}`")
         
         st.session_state.demo_resume_text = ""
+
