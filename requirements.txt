@@ -1,9 +1,12 @@
 streamlit
-spacy
-scikit-learn
 pdfplumber
 python-docx
-pandas
 
-# Medium model ka direct .whl link (yeh chalna chahiye)
+# Hum main libraries ke version ko 'pin' kar rahe hain taaki conflict na ho
+numpy==1.26.4
+pandas==2.2.0
+scikit-learn==1.4.0
+spacy==3.7.0
+
+# Medium model ka link jo spacy==3.7.0 ke saath match karta hai
 https://github.com/explosion/spacy-models/releases/download/en_core_web_md-3.7.0/en_core_web_md-3.7.0-py3-none-any.whl
