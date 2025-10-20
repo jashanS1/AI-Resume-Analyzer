@@ -224,7 +224,6 @@ if 'demo_resume_text' not in st.session_state:
     st.session_state.demo_resume_text = ""
 
 if st.button("Recruiter Busy? Click for a Quick Demo! 💡"):
-    st.session_state.resume_file = None
     st.session_state.jd_text_area = SAMPLE_JD
     st.session_state.demo_resume_text = SAMPLE_RESUME
     st.rerun()
@@ -250,14 +249,19 @@ with col2:
 # --- Analysis Button ---
 if st.button("Analyze My Hireability 🚀", type="primary"):
     
-    if resume_file is not None:
+    # PEHLE DEMO CHECK KARO
+    if st.session_state.demo_resume_text and jd_text:
+        st.info("Analyzing Demo Resume...")
+        resume_text = st.session_state.demo_resume_text
+    
+    # AGAR DEMO NAHI HAI, TAB FILE UPLOAD CHECK KARO
+    elif resume_file is not None:
         resume_text = extract_text(resume_file)
         if not jd_text:
             st.error("Please job description paste karein.")
             st.stop()
-    elif st.session_state.demo_resume_text and jd_text:
-        st.info("Analyzing Demo Resume...")
-        resume_text = st.session_state.demo_resume_text
+            
+    # AGAR KUCH BHI NAHI HAI
     else:
         st.error("Please resume file upload karein aur JD paste karein (ya demo button use karein).")
         st.stop()
@@ -339,4 +343,5 @@ if st.button("Analyze My Hireability 🚀", type="primary"):
         st.write(f"`{', '.join(set(jd_good_to_have) - set(resume_skills)) or 'None! Good job.'}`")
         
         st.session_state.demo_resume_text = ""
+
 
