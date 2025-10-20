@@ -5,5 +5,5 @@ pdfplumber
 python-docx
 pandas
 
-# Hum medium model use kar rahe hain jo seedha install ho jaata hai
-en-core-web-md
+# Medium model ka direct .whl link (yeh chalna chahiye)
+https://github.com/explosion/spacy-models/releases/download/en_core_web_md-3.7.0/en_core_web_md-3.7.0-py3-none-any.whl
